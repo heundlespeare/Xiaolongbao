@@ -11,56 +11,63 @@
 #open CEDICT file
 from collections import defaultdict
 import os
+
+from lib.dictionaries.dictionary import dictionary
 script_dir = os.path.dirname(__file__)
 
-with open(os.path.join(script_dir, 'cedict_ts.u8'), 'r', encoding='utf-8') as file:
-    text = file.read()
-    lines = text.split('\n')
-    dict_lines = list(lines)
 
-#define functions
 
-    def parse_line(line):
-        parsed = {}
-        if line == '':
-            dict_lines.remove(line)
-            return 0
-        line = line.rstrip('/')
-        line = line.split('/')
-        if len(line) <= 1:
-            return 0
-        english = line[1:]
-        char_and_pinyin = line[0].split('[')
-        characters = char_and_pinyin[0]
-        characters = characters.split()
-        traditional = characters[0]
-        simplified = characters[1]
-        # force all pinyin to be lowercase.
-        pinyin = char_and_pinyin[1].lower()
-        pinyin = pinyin.rstrip()
-        pinyin = pinyin.rstrip("]")
-        parsed['traditional'] = traditional
-        parsed['simplified'] = simplified
-        parsed['pinyin'] = pinyin
-        parsed['english'] = english
-        list_of_dicts.append(parsed)
-        if traditional != simplified:
-            whole_dict[traditional].append(parsed)
-            whole_dict[simplified].append(parsed)
-        else:
-            whole_dict[simplified].append(parsed)
-        # whole_dict[pinyin].append(parsed)
-        # TODO: parse english in a meaningful way.. 
-        whole_dict[pinyin.replace(' ', '')].append(parsed)
+#list_of_dicts = []
 
-    def remove_surnames():
-        for x in range(len(list_of_dicts)-1, -1, -1):
-            if "surname " in list_of_dicts[x]['english']:
-                if list_of_dicts[x]['traditional'] == list_of_dicts[x+1]['traditional']:
-                    list_of_dicts.pop(x)
-            
-    def main():
+class CEDict(dictionary):
+    def __init__(self):
+        whole_dict = defaultdict(list)
+        with open(os.path.join(script_dir, 'cedict_ts.u8'), 'r', encoding='utf-8') as file:
+            text = file.read()
+            lines = text.split('\n')
+            dict_lines = list(lines)
 
+        #define functions
+
+            def parse_line(line):
+                parsed = {}
+                if line == '':
+                    dict_lines.remove(line)
+                    return 0
+                line = line.rstrip('/')
+                line = line.split('/')
+                if len(line) <= 1:
+                    return 0
+                english = line[1:]
+                char_and_pinyin = line[0].split('[')
+                characters = char_and_pinyin[0]
+                characters = characters.split()
+                traditional = characters[0]
+                simplified = characters[1]
+                # force all pinyin to be lowercase.
+                pinyin = char_and_pinyin[1].lower()
+                pinyin = pinyin.rstrip()
+                pinyin = pinyin.rstrip("]")
+                parsed['traditional'] = traditional
+                parsed['simplified'] = simplified
+                parsed['pinyin'] = pinyin
+                parsed['english'] = english
+                #list_of_dicts.append(parsed)
+                if traditional != simplified:
+                    whole_dict[traditional].append(parsed)
+                    whole_dict[simplified].append(parsed)
+                else:
+                    whole_dict[simplified].append(parsed)
+                # whole_dict[pinyin].append(parsed)
+                # TODO: parse english in a meaningful way.. 
+                whole_dict[pinyin.replace(' ', '')].append(parsed)
+            '''
+            def remove_surnames():
+                for x in range(len(list_of_dicts)-1, -1, -1):
+                    if "surname " in list_of_dicts[x]['english']:
+                        if list_of_dicts[x]['traditional'] == list_of_dicts[x+1]['traditional']:
+                            list_of_dicts.pop(x)
+            '''        
         #make each line into a dictionary
         print("Parsing dictionary . . .")
         for line in dict_lines[30:]:
@@ -71,8 +78,6 @@ with open(os.path.join(script_dir, 'cedict_ts.u8'), 'r', encoding='utf-8') as fi
         #print("Removing Surnames . . .")
         #remove_surnames()
 
-        return list_of_dicts
-
 
         #If you want to save to a database as JSON objects, create a class Word in the Models file of your Django project:
 
@@ -81,7 +86,16 @@ with open(os.path.join(script_dir, 'cedict_ts.u8'), 'r', encoding='utf-8') as fi
         #     new_word = Word(traditional = one_dict["traditional"], simplified = one_dict["simplified"], english = one_dict["english"], pinyin = one_dict["pinyin"], hsk = one_dict["hsk"])
         #     new_word.save()
         print('Done!')
-
-list_of_dicts = []
-whole_dict = defaultdict(list)
-parsed_dict = main()
+        self.dictionary = whole_dict
+    def search(self, query) -> str:
+        if query not in self.dictionary:
+            return None
+        else:
+            result = self.dictionary[query]
+            description = ""
+            for word in result:
+                description += f'**{word["simplified"]}/{word["traditional"]}({word["pinyin"]})**\n'
+                for i, defn in enumerate(word["english"]):
+                    description +=f'   {i+1}. {defn}\n'
+                description += "\n"
+        return description

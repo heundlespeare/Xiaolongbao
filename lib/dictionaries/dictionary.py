@@ -1,11 +1,11 @@
 class dictionary: 
-    def __init__():
+    def __init__(self):
         pass
-    def search_by_pinyin(searchstring):
+    def search_by_pinyin(query) -> str:
         pass
-    def search_by_english(searchstring):
+    def search_by_english(query) -> str:
         pass
-    def search_by_hanzi(searchstring):
+    def search_by_hanzi(query) -> str:
         pass
-    def search(searchstring):
+    def search(query) -> str:
         pass

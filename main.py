@@ -2,12 +2,15 @@
 from config import TOKEN
 import discord
 from lib import corpusRequest
-from lib.dictionaries import cedict
+from lib.dictionaries.cedict import CEDict
+from hanziconv import HanziConv
 
 intents = discord.Intents.default()
 intents.dm_messages = True
 
 client = discord.Client(intents=intents)
+
+cedict = CEDict()
 
 @client.event
 async def on_ready():
@@ -29,19 +32,37 @@ async def on_message(message):
             corpus = 'INTERNET-ZH'
         words = " ".join(args[2:])
         await message.channel.send(f'Searching for instances of **{words}** in corpus **{corpus}** :\n'+ corpusRequest.leedsLookup(corpus, words))
-    elif message.content.startswith(']dict'):
-        arg = message.content.split()[1]
-        if arg not in cedict.whole_dict:
-            embed = discord.Embed(title=f'no result found for {arg}')
+    elif message.content.startswith(']ce'):
+        query = message.content.split()[1]
+        description = cedict.search(query)
+        if not description:
+            embed = discord.Embed(title=f'No result found for {query}')
         else:
-            result = cedict.whole_dict[arg]
-            description = ""
-            for word in result:
-                description += f'**{word["simplified"]}/{word["traditional"]}({word["pinyin"]})**\n'
-                for i, defn in enumerate(word["english"]):
-                    description +=f'   {i+1}. {defn}\n'
-                description += "\n"
-            embed = discord.Embed(title=f'Search result for {arg}', description=description)
+            embed = discord.Embed(title=f'Search result for {query}', description=description)
         await message.channel.send(embed=embed)
-        
+    elif message.content.startswith(']simptrad'):
+        query = message.content.split()[1]
+        trad = HanziConv.toTraditional(query)
+        embed = discord.Embed(title=f'Converting {query} to Traditional', description=trad)
+        await message.channel.send(embed=embed)
+    elif message.content.startswith(']tradsimp'):
+        query = message.content.split()[1]
+        simp = HanziConv.toSimplified(query)
+        embed = discord.Embed(title=f'Converting {query} to Traditional', description=simp)
+        await message.channel.send(embed=embed)
+    elif message.content.startswith(']help'):
+        description = """
+            **]ce :**
+              - Search Mandarin Chinese words in English in simplified/traditional characters or pinyin.
+
+            **]help :**
+              - this message
+
+            **]simptrad / ]tradsimp :**
+              - convert simplified <-> traditional
+        """
+        embed = discord.Embed(title=f'List of Commands:', description=description)
+        await message.channel.send(embed=embed)
+    
+
 client.run(TOKEN)
