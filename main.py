@@ -41,14 +41,24 @@ async def on_message(message):
             embed = discord.Embed(title=f'Search result for {query}', description=description)
         await message.channel.send(embed=embed)
     elif message.content.startswith(']simptrad'):
-        query = message.content.split()[1]
+        query = message.content[10:]
         trad = HanziConv.toTraditional(query)
-        embed = discord.Embed(title=f'Converting {query} to Traditional', description=trad)
+        embed = discord.Embed(title=f'Converting to Traditional', description=trad)
         await message.channel.send(embed=embed)
     elif message.content.startswith(']tradsimp'):
-        query = message.content.split()[1]
+        query = message.content[10:]
         simp = HanziConv.toSimplified(query)
-        embed = discord.Embed(title=f'Converting {query} to Traditional', description=simp)
+        embed = discord.Embed(title=f'Converting to Simplified', description=simp)
+        await message.channel.send(embed=embed)
+    elif message.content.startswith(']convert'):
+        # TODO: if I decide to stop hardcoding I should probably stop slicing by index number. save prefix by server in a json file and slice by prefix + number:
+        query = message.content[9:]
+        trad = HanziConv.toTraditional(query)
+        simp = HanziConv.toSimplified(query)
+        if query != simp:
+            embed = discord.Embed(title=f'Converting to Simplified', description=simp)
+        else:
+            embed = discord.Embed(title=f'Converting to Traditional', description=trad)
         await message.channel.send(embed=embed)
     elif message.content.startswith(']help'):
         description = """
@@ -58,7 +68,7 @@ async def on_message(message):
             **]help :**
               - this message
 
-            **]simptrad / ]tradsimp :**
+            **]convert / ]simptrad / ]tradsimp :**
               - convert simplified <-> traditional
         """
         embed = discord.Embed(title=f'List of Commands:', description=description)
