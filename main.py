@@ -29,7 +29,7 @@ async def on_message(message):
             corpus = 'INTERNET-ZH'
         words = " ".join(args[2:])
         await message.channel.send(f'Searching for instances of **{words}** in corpus **{corpus}** :\n'+ corpusRequest.leedsLookup(corpus, words))
-    elif message.content.startswith('dict'):
+    elif message.content.startswith(']dict'):
         arg = message.content.split()[1]
         if arg not in cedict.whole_dict:
             embed = discord.Embed(title=f'no result found for {arg}')
