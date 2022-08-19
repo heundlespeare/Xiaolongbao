@@ -12,14 +12,14 @@
 from collections import defaultdict
 import os
 
-from lib.dictionaries.dictionary import dictionary
+from lib.dictionaries.dictionary import Dictionary
 script_dir = os.path.dirname(__file__)
 
 
 
 #list_of_dicts = []
 
-class CEDict(dictionary):
+class CEDict(Dictionary):
     def __init__(self):
         whole_dict = defaultdict(list)
         with open(os.path.join(script_dir, 'cedict_ts.u8'), 'r', encoding='utf-8') as file:
@@ -92,10 +92,10 @@ class CEDict(dictionary):
             return None
         else:
             result = self.dictionary[query]
-            description = ""
+            descriptions = []
             for word in result:
-                description += f'**{word["simplified"]}/{word["traditional"]}({word["pinyin"]})**\n'
+                description = f'**{word["simplified"]}/{word["traditional"]}({word["pinyin"]})**\n'
                 for i, defn in enumerate(word["english"]):
                     description +=f'   {i+1}. {defn}\n'
-                description += "\n"
-        return description
+                descriptions.append(description)
+        return descriptions
