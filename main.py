@@ -65,6 +65,7 @@ async def tradsimp(ctx, *, text):
     await ctx.send(embed=embed)
 
 @bot.command()
+@commands.has_permissions(administrator=True)
 async def setprefix(ctx, prefix):
     key = str(ctx.guild.id)
     prefix_dict[key] = prefix
