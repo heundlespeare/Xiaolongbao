@@ -20,7 +20,7 @@ class TaishaneseDict():
         entries=[]
         while curr < len(result):
             word_taishan = result[curr]
-            curr+=2
+            curr +=2
             ipa = result[curr]
             curr += 2
             if result[curr] == 'mandarin:':
@@ -35,10 +35,10 @@ class TaishaneseDict():
             else:
                 mando = result[curr]
                 curr += 2
-            if re.search('[a-zA-z]', result[curr]):
+            if re.search('[^\u4e00-\u9fff]', result[curr]):
                 definition = result[curr]
                 curr += 1
-                while curr < len(result) and re.search('[a-zA-z]', result[curr]):
+                while curr < len(result) and re.search('[^\u4e00-\u9fff]', result[curr]):
                     definition += '\n' + result[curr]
                     curr +=1
                 else:
