@@ -10,6 +10,8 @@ import Paginator
 from lib.dictionaries.taishanese import TaishaneseDict
 from utils import paginate
 
+
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -77,7 +79,9 @@ async def setprefix(ctx, prefix):
     await ctx.send(embed=embed)
 
 @bot.command(aliases=["ts"])
-async def taishan(ctx, lang, query):
+async def taishan(ctx, 
+    lang: str = commands.Parameter(description="options: taishanese(ts), english(en), mandarin(mando), cantonese(canto)", name="language", kind=commands.Parameter.POSITIONAL_ONLY),
+    query: str = commands.Parameter(description="the word you are trying to search. It is also a partial search.", name="query", kind=commands.Parameter.POSITIONAL_ONLY)):
     lang = lang.lower()
     if lang == "taishanese" or lang == "ts":
         results = taishan_dict.search_taishanese(query)
