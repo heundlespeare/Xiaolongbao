@@ -1,78 +1,76 @@
 # This example requires the 'message_content' intent.
 from config import TOKEN
 import discord
-from lib import corpusRequest
 from lib.dictionaries.cedict import CEDict
 from hanziconv import HanziConv
+from discord.ext import commands
+import json
+import Paginator
 
 intents = discord.Intents.default()
-intents.dm_messages = True
+intents.message_content = True
 
-client = discord.Client(intents=intents)
 
 cedict = CEDict()
 
-@client.event
+
+DEFAULT_PREFIX = ']'
+NUM_RESULTS_PER_PAGE = 5
+
+prefix_dict = json.load(open('prefixes.json','r'))
+async def get_prefix(client, message):
+    key = str(message.guild.id)
+    if key not in prefix_dict:
+        return DEFAULT_PREFIX
+    else:
+        return prefix_dict[key]
+
+bot = commands.Bot(command_prefix=(get_prefix), intents=intents)
+
+@bot.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print(f'We have logged in as {bot.user}')
 
+@bot.command()
+async def ce(ctx, query):
+    results = cedict.search(query)
+    partitions = [results[i:i+NUM_RESULTS_PER_PAGE] for i in range(0, len(results), NUM_RESULTS_PER_PAGE)]
+    pages = [discord.Embed(title=f'Search result for {query}, Page {i+1}/{len(partitions)}', description="\n".join(partitions[i])) for i in range(len(partitions))]
+    if len(results) == 0:
+        embed = discord.Embed(title=f'No result found for {query}')
+        await ctx.send(embed=embed)
+    else:
+        await Paginator.Simple().start(ctx, pages = pages)
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    if message.content.startswith('corpus'):
-        args = message.content.split()[1:]
-        lang = args[0]
-        corpus = args[1]
-        print(" ".join(args[2:]))
-        if corpus == 'lcmc':
-            corpus = corpusRequest.lcmc
-        elif corpus == 'web':
-            corpus = 'INTERNET-ZH'
-        words = " ".join(args[2:])
-        await message.channel.send(f'Searching for instances of **{words}** in corpus **{corpus}** :\n'+ corpusRequest.leedsLookup(corpus, words))
-    elif message.content.startswith(']ce'):
-        query = message.content.split()[1]
-        description = cedict.search(query)
-        if not description:
-            embed = discord.Embed(title=f'No result found for {query}')
-        else:
-            embed = discord.Embed(title=f'Search result for {query}', description=description)
-        await message.channel.send(embed=embed)
-    elif message.content.startswith(']simptrad'):
-        query = message.content[10:]
-        trad = HanziConv.toTraditional(query)
-        embed = discord.Embed(title=f'Converting to Traditional', description=trad)
-        await message.channel.send(embed=embed)
-    elif message.content.startswith(']tradsimp'):
-        query = message.content[10:]
-        simp = HanziConv.toSimplified(query)
+@bot.command()
+async def convert(ctx, *, text):
+    trad = HanziConv.toTraditional(text)
+    simp = HanziConv.toSimplified(text)
+    if text != simp:
         embed = discord.Embed(title=f'Converting to Simplified', description=simp)
-        await message.channel.send(embed=embed)
-    elif message.content.startswith(']convert'):
-        # TODO: if I decide to stop hardcoding I should probably stop slicing by index number. save prefix by server in a json file and slice by prefix + number:
-        query = message.content[9:]
-        trad = HanziConv.toTraditional(query)
-        simp = HanziConv.toSimplified(query)
-        if query != simp:
-            embed = discord.Embed(title=f'Converting to Simplified', description=simp)
-        else:
-            embed = discord.Embed(title=f'Converting to Traditional', description=trad)
-        await message.channel.send(embed=embed)
-    elif message.content.startswith(']help'):
-        description = """
-            **]ce :**
-              - Search Mandarin Chinese words in English in simplified/traditional characters or pinyin.
+    else:
+        embed = discord.Embed(title=f'Converting to Traditional', description=trad)
+    await ctx.send(embed=embed)
 
-            **]help :**
-              - this message
+@bot.command()
+async def simptrad(ctx, *, text):
+    trad = HanziConv.toTraditional(text)
+    embed = discord.Embed(title=f'Converting to Traditional', description=trad)
+    await ctx.send(embed=embed)    
 
-            **]convert / ]simptrad / ]tradsimp :**
-              - convert simplified <-> traditional
-        """
-        embed = discord.Embed(title=f'List of Commands:', description=description)
-        await message.channel.send(embed=embed)
-    
+@bot.command()
+async def tradsimp(ctx, *, text):
+    simp = HanziConv.toSimplified(text)
+    embed = discord.Embed(title=f'Converting to Simplified', description=simp)
+    await ctx.send(embed=embed)
 
-client.run(TOKEN)
+@bot.command()
+async def setprefix(ctx, prefix):
+    key = str(ctx.guild.id)
+    prefix_dict[key] = prefix
+    with open('prefixes.json', 'w') as f:
+        json.dump(prefix_dict, f)
+    embed = discord.Embed(title=f'Changed prefix to {prefix}')
+    await ctx.send(embed=embed)
+
+bot.run(TOKEN)
