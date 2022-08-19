@@ -3,6 +3,7 @@
 #from lib.dictionaries.dictionary import Dictionary
 import requests
 from bs4 import BeautifulSoup
+import re 
 
 class TaishaneseDict():
     def __init__(self):
@@ -15,22 +16,40 @@ class TaishaneseDict():
         result = soup.get_text(separator="\n", strip=True)
         result = result.split("\n")
         result = result[2:]
-        entries = []
         curr = 0
+        entries=[]
         while curr < len(result):
             word_taishan = result[curr]
-            ipa = result[curr+2]
-            canto = result[curr+4]
-            mando = result[curr+6]
-            if curr+9 < len(result) and any([ch.isalpha() for ch in result[curr+9]]):
-                definition = result[curr+8] + '\n' + result[curr+9]
-                curr += 10
+            curr+=2
+            ipa = result[curr]
+            curr += 2
+            if result[curr] == 'mandarin:':
+                canto = ''
+                curr += 1
             else:
-                curr += 9
-            entry = f'**{word_taishan}({ipa})**\n ' \
-                f'Mandarin: {mando}'\
-                f'Cantonese: {canto}'\
-                f'Definition: {definition}'
+                canto = result[curr]
+                curr += 2
+            if result[curr] == 'english:':
+                mando = ''
+                curr += 1
+            else:
+                mando = result[curr]
+                curr += 2
+            if re.search('[a-zA-z]', result[curr]):
+                definition = result[curr]
+                curr += 1
+                while curr < len(result) and re.search('[a-zA-z]', result[curr]):
+                    definition += '\n' + result[curr]
+                    curr +=1
+                else:
+                    pass
+            else:
+                pass
+            entry = f'**{word_taishan}**({ipa})\n ' \
+                f'  Mandarin: {mando}\n'\
+                f'  Cantonese: {canto}\n\n'\
+                f'  Definition: {definition}\n'\
+                '__________'
             entries.append(entry)
         return entries
     def search_taishanese(self, query):

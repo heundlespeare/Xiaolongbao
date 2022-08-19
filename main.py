@@ -91,8 +91,9 @@ async def taishan(ctx, lang, query):
         results = []
     if len(results) == 0:
         embed = discord.Embed(title=f'No result found for {query}')
+        await ctx.send(embed=embed)
     else:
-        embed = paginate(query, results, NUM_RESULTS_PER_PAGE)
-    await ctx.send(embed=embed)
+        pages = paginate(query, results, NUM_RESULTS_PER_PAGE)
+        await Paginator.Simple().start(ctx, pages=pages)
 
 bot.run(TOKEN)
