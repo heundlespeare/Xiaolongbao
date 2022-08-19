@@ -61,5 +61,3 @@ class TaishaneseDict():
             "Select2": "Partial"            
         }
         return self._search(data)
-d = TaishaneseDict()
-print(d.search_mandarin("台山"))
