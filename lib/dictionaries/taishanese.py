@@ -50,7 +50,7 @@ class TaishaneseDict():
                     definition = result[curr]
                     curr += 1
                     while curr < len(result):
-                        definition += ' ' + result[curr]
+                        definition += '. ' + result[curr]
                         curr +=1
                     else:
                         pass
