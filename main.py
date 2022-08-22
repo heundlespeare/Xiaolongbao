@@ -2,6 +2,7 @@
 from config import TOKEN
 import discord
 from lib.dictionaries.cedict import CEDict
+from lib.dictionaries.ecdict import ECDict
 from hanziconv import HanziConv
 from discord.ext import commands
 import json
@@ -17,6 +18,7 @@ intents.message_content = True
 
 
 cedict = CEDict()
+ecdict = ECDict()
 taishan_dict = TaishaneseDict()
 
 DEFAULT_PREFIX = ']'
@@ -39,6 +41,16 @@ async def on_ready():
 @bot.command()
 async def ce(ctx, query):
     results = cedict.search(query)
+    pages = paginate(query, results, NUM_RESULTS_PER_PAGE)
+    if len(results) == 0:
+        embed = discord.Embed(title=f'No result found for {query}')
+        await ctx.send(embed=embed)
+    else:
+        await Paginator.Simple().start(ctx, pages = pages)
+
+@bot.command()
+async def ec(ctx, query):
+    results = ecdict.search(query)
     pages = paginate(query, results, NUM_RESULTS_PER_PAGE)
     if len(results) == 0:
         embed = discord.Embed(title=f'No result found for {query}')
