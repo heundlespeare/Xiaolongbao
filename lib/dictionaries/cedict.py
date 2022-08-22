@@ -87,9 +87,9 @@ class CEDict(Dictionary):
         #     new_word.save()
         print('Done!')
         self.dictionary = whole_dict
-    def search(self, query) -> str:
+    def search(self, query) -> list[str]:
         if query not in self.dictionary:
-            return None
+            return []
         else:
             result = self.dictionary[query]
             descriptions = []
