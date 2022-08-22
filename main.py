@@ -49,7 +49,7 @@ async def ce(ctx, query):
         await Paginator.Simple().start(ctx, pages = pages)
 
 @bot.command()
-async def ec(ctx, query):
+async def ec(ctx, *, query):
     results = ecdict.search(query)
     pages = paginate(query, results, NUM_RESULTS_PER_PAGE)
     if len(results) == 0:
