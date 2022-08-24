@@ -2,7 +2,7 @@
 from config import TOKEN
 import discord
 from lib.dictionaries.cedict import CEDict
-from lib.dictionaries.ecdict2 import ECDict
+from lib.dictionaries.ecdict import ECDict
 from hanziconv import HanziConv
 from discord.ext import commands
 import json
