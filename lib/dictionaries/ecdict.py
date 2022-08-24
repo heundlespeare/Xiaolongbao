@@ -10,17 +10,29 @@
 
 #open CEDICT file
 import os
-import pandas as pd
-
+from whoosh.fields import Schema, TEXT
+from whoosh import index
+from whoosh.qparser import QueryParser
+from tqdm import tqdm
 script_dir = os.path.dirname(__file__)
 
 
-
-list_of_dicts = []
-
 class ECDict():
     def __init__(self):
+        schema = Schema(traditional=TEXT(stored=True), simplified=TEXT(stored=True), pinyin=TEXT(stored=True), english=TEXT(stored=True))
+        if not os.path.exists(os.path.join(script_dir, 'cedict_index')):
+            index_path = os.path.join(script_dir, 'cedict_index')
+            os.mkdir(index_path)
+            ix = index.create_in(index_path, schema)
+            ix = index.open_dir(index_path)
+            writer = ix.writer()
+        else:
+            ix = index.open_dir(os.path.join(script_dir, 'cedict_index'))
+            self._searcher = ix.searcher()
+            return
+            #idk do something
         with open(os.path.join(script_dir, 'cedict_ts.u8'), 'r', encoding='utf-8') as file:
+            print("cock")
             text = file.read()
             lines = text.split('\n')
             dict_lines = list(lines)
@@ -50,7 +62,7 @@ class ECDict():
                 parsed['simplified'] = simplified
                 parsed['pinyin'] = pinyin
                 parsed['english'] = "\n".join(english)
-                list_of_dicts.append(parsed)
+                writer.add_document(**parsed)
             '''
             def remove_surnames():
                 for x in range(len(list_of_dicts)-1, -1, -1):
@@ -60,9 +72,11 @@ class ECDict():
             '''        
         #make each line into a dictionary
         print("Parsing dictionary . . .")
-        for line in dict_lines[30:]:
+        for line in tqdm(dict_lines[30:]):
             parse_line(line)
-        
+        writer.commit()
+        self._searcher = ix.searcher()
+        self.qp = QueryParser("english", schema=self._searcher.schema)
         #remove entries for surnames from the data (optional):
 
         #print("Removing Surnames . . .")
@@ -76,18 +90,13 @@ class ECDict():
         #     new_word = Word(traditional = one_dict["traditional"], simplified = one_dict["simplified"], english = one_dict["english"], pinyin = one_dict["pinyin"], hsk = one_dict["hsk"])
         #     new_word.save()
         print('Done!')
-        df = pd.json_normalize(list_of_dicts)
-        df.drop_duplicates(keep=False, inplace=True)
-        self.dictionary = df
     def search(self, query) -> list[str]:
-        results = self.dictionary[self.dictionary['english'].str.contains(query, regex=False)]
+        q = self.qp.parse(query)
+        results = self._searcher.search(q, limit=50)
         descriptions = []
-        if results.empty:
-            return []
-        else:
-            for word in results.to_dict(orient='records'):
-                description = f'**{word["simplified"]}/{word["traditional"]}({word["pinyin"]})**\n'
-                for i, defn in enumerate(word["english"].split("\n")):
-                    description +=f'   {i+1}. {defn}\n'
-                descriptions.append(description)
-            return descriptions
+        for word in results:
+            description = f'**{word["simplified"]}/{word["traditional"]}({word["pinyin"]})**\n'
+            for i, defn in enumerate(word["english"].split("\n")):
+                description +=f'   {i+1}. {defn}\n'
+            descriptions.append(description)
+        return descriptions

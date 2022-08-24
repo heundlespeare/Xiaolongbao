@@ -2,3 +2,4 @@
 **/__pycache__/ 
 *.json
 /lib/corpusRequest.py
+/lib/dictionaries/cedict_index
